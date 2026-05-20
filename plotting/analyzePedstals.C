@@ -6,17 +6,18 @@ void FillChain(TChain &chain, std::string filename);
 
 /// main function to analyze pedestals 
 void analyzePedstals(){
-    std::string filename = "ZDCAnalyzer_USC_394200.root"; 
+    int runNumber = 404027; 
+    std::string filename = Form("ZDCAnalyzer_USC_%d.root", runNumber); 
     TFile* inFile = TFile::Open(filename.c_str()); 
     bool isLocal = true; 
-    int runNumber = 394200; 
+   
 
     if(isLocal){
-        std::cout << "~~~~~ Analyzing pedestals from a LOCAL run ~~~~~" << std::endl;
+        std::cout << "~~~~~ Analyzing pedestals from a LOCAL run: " << filename.c_str() << " ~~~~~" << std::endl;
         analyzePedestalsLocal(inFile, runNumber, false);
     }
     else{
-        std::cout << "~~~~~ Analyzing pedestals from a GLOBAL run ~~~~~" << std::endl;
+        std::cout << "~~~~~ Analyzing pedestals from a GLOBAL run: " << filename.c_str() << " ~~~~~" << std::endl;
         analyzePedestalsGlobal(filename, runNumber); 
     }
 
@@ -278,13 +279,13 @@ void analyzePedestalsGlobal(std::string filename, int runNumber){
 void analyzePedestalsLocal(TFile* inFile , int runNumber, bool doDummy){
     TDirectoryFile* inDirect = (TDirectoryFile*)inFile->Get("zdcana"); 
     TDirectoryFile* adcDirect = (TDirectoryFile*)inDirect->Get("ADC");
-    std::string namesNoSpace[26] = {"hZDCM_EM1", "hZDCM_EM2", "hZDCM_EM3", "hZDCM_EM4", "hZDCM_EM5", "hZDCM_HAD1", "hZDCM_HAD2", "hZDCM_HAD3", "hZDCM_HAD4", "hZDCP_EM1", "hZDCP_EM2", "hZDCP_EM3", "hZDCP_EM4",  "hZDCP_EM5",  "hZDCP_HAD1", "hZDCP_HAD2", "hZDCP_HAD3", "hZDCP_HAD4", "hZDCM_EM7", "hZDCM_EM8", "hZDCM_EM9", "hZDCM_EM10", "hZDCM_EM11", "hZDCM_EM12"};
+    std::string namesNoSpace[32] = {"hZDCM_EM1", "hZDCM_EM2", "hZDCM_EM3", "hZDCM_EM4", "hZDCM_EM5", "hZDCM_HAD1", "hZDCM_HAD2", "hZDCM_HAD3", "hZDCM_HAD4", "hZDCP_EM1", "hZDCP_EM2", "hZDCP_EM3", "hZDCP_EM4",  "hZDCP_EM5",  "hZDCP_HAD1", "hZDCP_HAD2", "hZDCP_HAD3", "hZDCP_HAD4", "hZDCM_EM7", "hZDCM_EM8", "hZDCM_EM9", "hZDCM_EM10", "hZDCM_EM11", "hZDCM_EM12", "hZDCP_EM7", "hZDCP_EM8", "hZDCP_EM9", "hZDCP_EM10", "hZDCP_EM11", "hZDCP_EM12"};
     std::string namesNoSpaceRPD[32] = {"hZDCM_PRD0","hZDCM_PRD1","hZDCM_PRD2", "hZDCM_PRD3", "hZDCM_PRD4", "hZDCM_PRD5", "hZDCM_PRD6", "hZDCM_PRD7", "hZDCM_PRD8", "hZDCM_PRD9", "hZDCM_PRD10", "hZDCM_PRD11", "hZDCM_PRD12", "hZDCM_PRD13", "hZDCM_PRD14", "hZDCM_PRD15" };
 
     std::string namesNoSpaceDummy[20] = {"hZDCM_EM6", "hZDCM_EM7", "hZDCM_EM8", "hZDCM_RPD12", "hZDCM_RPD13", "hZDCM_RPD14", "hZDCM_RPD15", "hZDCP_EM6", "hZDCP_EM7", "hZDCP_EM8", "hZDCP_RPD12", "hZDCP_RPD13",  "hZDCP_RPD14",  "hZDCP_RPD15"};
     int colors[20] = {kRed+2, kRed-4, kOrange+7, kOrange, kYellow-4, kSpring+10, kSpring, kGreen-3, kGreen+3, kTeal-7, kTeal, kAzure+10, kAzure-4, kBlue+2, kViolet+8, kViolet-1, kMagenta+1, kMagenta-4, kPink+7, kPink-4};
     std::string ColorStrings[16] = {"#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd", "#5790fc", "#f89c20", "#e42536", "#964a8b", "#9c9ca1", "#7a21dd"};
-    int nHistsWithFSC = 24; 
+    int nHistsWithFSC = 30; 
     int nHists = 18; 
     if(doDummy){
         nHists = 14; 
@@ -387,6 +388,10 @@ void analyzePedestalsLocal(TFile* inFile , int runNumber, bool doDummy){
     cms->SetTextSize(0.05);
     cms->SetTextFont(42);
 
+    TLatex* cmsFSC = new TLatex(0.10,0.92,Form("#bf{FSC} Run %d #it{Work in progress}", runNumber));
+    cmsFSC->SetNDC();
+    cmsFSC->SetTextSize(0.05);
+    cmsFSC->SetTextFont(42);
 
     legADC->Draw();
     cms->Draw();
@@ -447,12 +452,12 @@ void analyzePedestalsLocal(TFile* inFile , int runNumber, bool doDummy){
     adcHists[indexFSC]->GetYaxis()->SetRangeUser(1, 1e10);
     adcHists[indexFSC]->GetXaxis()->SetRangeUser(0, 200);
     adcHists[indexFSC]->Draw();
-    cms->Draw(); 
+    cmsFSC->Draw(); 
 
-    std::string FSCNames[6] = {"FSC Station 2 - Top", "FSC Station 2 - Bottom", "FSC Station 3 - Bottom Left", "FSC Station 3 - Bottom Right", "FSC Station 3 - Top Left", "FSC Station 3 - Top Right"};
+    std::string FSCNames[12] = {"FSCM Station 2 - Top", "FSCM Station 2 - Bottom", "FSCM Station 3 - Bottom Left", "FSCM Station 3 - Bottom Right", "FSCM Station 3 - Top Left", "FSCM Station 3 - Top Right", "FSCP Station 2 - Top", "FSCP Station 2 - Bottom", "FSCP Station 3 - Bottom Left", "FSCP Station 3 - Bottom Right", "FSCP Station 3 - Top Left", "FSCP Station 3 - Top Right"};
     TLegend* legADCFSC = new TLegend(0.16, 0.57, 0.7, 0.88);
     legADCFSC->SetBorderSize(0);
-     for(int x = nHists; x < nHistsWithFSC; x++){
+     for(int x = nHists; x < nHistsWithFSC-6; x++){
         adcHists[x]->Draw("same"); 
         TF1* fitPed = new TF1("fitFSC", "gaus",  0, 150);
         fitPed->SetLineColor(adcHists[x]->GetLineColor());
@@ -464,7 +469,45 @@ void analyzePedestalsLocal(TFile* inFile , int runNumber, bool doDummy){
      }
     legADCFSC->SetTextSize(0.04);
     legADCFSC->Draw();
-    cADCFSC->SaveAs(Form("ZDCAnalyzer_%d_FSC.pdf", runNumber));
+    cADCFSC->SaveAs(Form("ZDCAnalyzer_%d_FSCM.pdf", runNumber));
+
+
+
+
+    // Draw FSC Channels
+    TCanvas* cADCFSCp = new TCanvas("cADCFSCp", "cADCFSCp", 800, 600);
+    cADCFSCp->SetLogy();
+    cADCFSCp->SetRightMargin(0.05);
+    cADCFSCp->cd(); 
+
+    int indexFSCp = nHistsWithFSC-6; 
+    adcHists[indexFSCp]->SetLineColor(TColor::GetColor(ColorStrings[0].c_str()));
+    adcHists[indexFSCp]->SetLineWidth(3);
+    adcHists[indexFSCp]->SetMarkerStyle(20);
+    adcHists[indexFSCp]->SetMarkerColor(TColor::GetColor(ColorStrings[0].c_str()));
+    adcHists[indexFSCp]->SetFillColor(TColor::GetColor(ColorStrings[0].c_str()));
+    adcHists[indexFSCp]->SetFillStyle(3004);
+    adcHists[indexFSCp]->GetXaxis()->SetTitle("ADC Per Channel");
+    adcHists[indexFSCp]->GetYaxis()->SetRangeUser(1, 1e10);
+    adcHists[indexFSCp]->GetXaxis()->SetRangeUser(0, 200);
+    adcHists[indexFSCp]->Draw();
+    cmsFSC->Draw(); 
+
+    TLegend* legADCFSCp = new TLegend(0.16, 0.57, 0.7, 0.88);
+    legADCFSCp->SetBorderSize(0);
+     for(int x = nHistsWithFSC - 6; x < nHistsWithFSC; x++){
+        adcHists[x]->Draw("same"); 
+        TF1* fitPed = new TF1("fitFSC", "gaus",  0, 150);
+        fitPed->SetLineColor(adcHists[x]->GetLineColor());
+        fitPed->SetLineWidth(3);
+        fitPed->SetLineStyle(2);
+        adcHists[x]->Fit(fitPed); 
+        fitPed->Draw("same");
+        legADCFSCp->AddEntry(adcHists[x], Form("%s, #mu = %0.2f, #sigma = %0.2f", FSCNames[x-nHists].c_str(),fitPed->GetParameter(1), fitPed->GetParameter(2)), "f");
+     }
+    legADCFSCp->SetTextSize(0.04);
+    legADCFSCp->Draw();
+    cADCFSCp->SaveAs(Form("ZDCAnalyzer_%d_FSCP.pdf", runNumber));
 }
 
 
