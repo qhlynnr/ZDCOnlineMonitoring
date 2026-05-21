@@ -5,7 +5,8 @@ import os
 import sys
 
 
-process = cms.Process('LocalZDC')
+from Configuration.Eras.Era_Run3_pp_on_PbPb_2026_cff import Run3_pp_on_PbPb_2026
+process = cms.Process('RAW2DIGI', Run3_pp_on_PbPb_2026)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -14,32 +15,33 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
-#process.load('Configuration.StandardSequences.RawToDigi_Data_cff')
-process.load("EventFilter.HcalRawToDigi.HcalRawToDigi_cfi")
-process.hcalDigis.InputLabel =  cms.InputTag('source')
+process.load('Configuration.StandardSequences.RawToDigi_DataMapper_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+
 
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '161X_dataRun3_Prompt_v1', '')
 
 
-#process.add_(cms.Service("AdaptorConfig", native=cms.untracked.vstring("root")))
-
 # To change the number of events, change this part
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1),
+    input = cms.untracked.int32(1000),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
-# Input source (for now first local run of 2025)
-process.source = cms.Source("HcalTBSource",
-    fileNames = cms.untracked.vstring(
-        'file:/eos/cms/store/group/dpg_hcal/comm_hcal/ZDC/USC/run404027/USC_404027.root'
-    ),
-    firstLuminosityBlockForEachRun = cms.untracked.VLuminosityBlockID(*[])
-
+# Input source if not a streamer file
+process.source = cms.Source("PoolSource",
+     fileNames = cms.untracked.vstring(
+         '/store/hidata/HIRun2025A/HIEphemeralZeroBias0/RAW/v1/000/399/925/00000/f44192ce-9c5b-445d-aaf3-f844dc5c6294.root'
+     )
 )
+
+# input source if a streamer file
+# for now use cosmics file from chris just for testing
+# process.source = cms.Source("NewEventStreamFileReader",
+#                            fileNames =  cms.untracked.vstring('file:/eos/cms/store/group/phys_heavyions/cmcginn/Run2025/ExpressCosmics/399/916/run399916_ls0021_streamExpressCosmics_StorageManager.dat'),
+# )
 
 
 
@@ -79,7 +81,7 @@ from Configuration.Applications.ConfigBuilder import MassReplaceInputTag
 # Additional output definition
 
 # Path and EndPath definitions
-process.raw2digi_step = cms.Path( process.hcalDigis)
+process.raw2digi_step = cms.Path(process.RawToDigi)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 
 # Schedule definition
@@ -96,31 +98,23 @@ process = customiseEarlyDelete(process)
 
 # root output
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("ZDCAnalyzer_USC_404027.root"))
+    fileName = cms.string("ZDCAnalyze_FromRaw_2026.root"))
 
-# =====================================================================
-# add in the zdc analyzer - this writes the digi information to a tree
-process.load('HeavyIonsAnalysis.ZDCAnalysis.QWZDC2018Producer_cfi')
-
-process.zdcdigi_step = cms.Path(process.zdcdigi)
-process.schedule.append(process.zdcdigi_step)
-
-process.zdcana = cms.EDAnalyzer('QWZDC2018Analyzer',
-		srcADC = cms.untracked.InputTag('zdcdigi', 'ADC'),
-		srcfC = cms.untracked.InputTag('zdcdigi', 'regularfC'),
-		srcDetId = cms.untracked.InputTag('zdcdigi', 'DetId'),
-		srcCapId = cms.untracked.InputTag('zdcdigi', 'CapId'),
-		srcHigh = cms.untracked.InputTag('zdcdigi', 'chargeHigh'),
-		srcLow = cms.untracked.InputTag('zdcdigi', 'chargeLow'),
-		srcSum = cms.untracked.InputTag('zdcdigi', 'chargeSum'),
-		Norm = cms.untracked.bool(False),
-		bTree = cms.untracked.bool(True)
-		)
-
-process.zdcanalyzer_step = cms.Path(process.zdcana)
+#########################
+# ZDC RecHit Producer && Analyzer
+#########################
+# to prevent crash related to HcalSeverityLevelComputerRcd record
+process.load("RecoLocalCalo.HcalRecAlgos.hcalRecAlgoESProd_cfi")
+process.load('HeavyIonsAnalysis.ZDCAnalysis.ZDCAnalyzersPbPb_cff')
+process.load('HeavyIonsAnalysis.ZDCAnalysis.FSCAnalyzers_cff')
+process.zdcreco_step = cms.Path(process.zdcrecoRun3)
+process.zdcanalyzer_step = cms.Path(process.zdcanalyzer)
+process.schedule.append(process.zdcreco_step)
 process.schedule.append(process.zdcanalyzer_step)
-
-
+process.fsccanalyzer_step = cms.Path(process.fscanalyzer)
+process.schedule.append(process.fsccanalyzer_step )
 #=======================================================================
 
 
+# needed for HIN data, but not needed for this commissioning set
+#MassReplaceInputTag(process, new="rawDataRepacker", old="rawDataCollector")
