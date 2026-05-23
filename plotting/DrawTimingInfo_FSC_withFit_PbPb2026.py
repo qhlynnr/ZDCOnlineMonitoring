@@ -1,15 +1,12 @@
+# DrawTimingInfo_FSC_withFit_PbPb2026.py: Timing macro for 2026 in FSC
+# Hannah Bossi, <hannah.bossi@cern.ch>
+# May 23rd, 2026
 import ROOT
 
 # Don't draw all of the plots, instead jsut save the 
 ROOT.gROOT.SetBatch(True) 
 
-
-RunEra = "PbPb 2025" 
-RunNumber = "Run399415"
-
-RunEnergy = "5.36 TeV"
-
-InputFileName = "ZDCAnalyze_2026_404157_FSC.root"#"HIForward0_2024_R388750.root"
+InputFileName = "ZDCAnalyze_2026_404157_FSC.root"
 
 fileBegin = "PbPbCommissioning_FSC_TDC" # Beginning of plot output, Full output will be <fileBegin>+<ZDC Channel>.png
 
@@ -20,8 +17,7 @@ doAutoFit = False  # Use the mean and width from histogram stats to initialize g
 ConsiderAllTimeSlices = False # adds all TDC values less than 50 to the Timing Histogram, Otherwise only TDC info from TS with highest charge or preceding TS in case of overflow is considered.
 doPlotting = True
 
-Min_Charge = 1000 # minimum charge to consider a TDC value
-
+# min and max window for the fitting range
 fitMin = 40
 fitMax = 60
 
@@ -264,7 +260,7 @@ for x in ZdcChargeDict:
     
 
     
-    
+# format the output so that it can be pasted into mattermost   
 print("| Channel | Mean | Mean Error | Sigma | Sigma Error |")
 print("|---------|------|------------|-------|-------------|")
 for x in ZDC_TimeStats:
