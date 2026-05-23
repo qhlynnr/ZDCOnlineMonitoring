@@ -13,14 +13,14 @@ InputFileName = "ZDCAnalyze_2026_404157_FSC.root"#"HIForward0_2024_R388750.root"
 
 fileBegin = "PbPbCommissioning_FSC_TDC" # Beginning of plot output, Full output will be <fileBegin>+<ZDC Channel>.png
 
-nbin_minus, min_minus, max_minus = 25,0,150 # Binning for ZDC Minus
-nbin_plus, min_plus, max_plus = 25,0,150 # Binning for ZDC Plus
+nbin_minus, min_minus, max_minus = 50,0,150 # Binning for ZDC Minus
+nbin_plus, min_plus, max_plus = 50,0,150 # Binning for ZDC Plus
 
 doAutoFit = False  # Use the mean and width from histogram stats to initialize gaussian fit
 ConsiderAllTimeSlices = False # adds all TDC values less than 50 to the Timing Histogram, Otherwise only TDC info from TS with highest charge or preceding TS in case of overflow is considered.
 doPlotting = True
 
-Min_Charge = 0 # minimum charge to consider a TDC value
+Min_Charge = 1000 # minimum charge to consider a TDC value
 
 fitMin = 40
 fitMax = 60
@@ -119,7 +119,7 @@ ROOT.gInterpreter.Declare(
 using ROOT::RVecF;
 using ROOT::RVecI;
 float GetTdcTime(const RVecF &Charge0, const RVecI &Tdc0, const RVecF &Charge1, const RVecI &Tdc1, const RVecF &Charge2, const RVecI &Tdc2,
-const RVecF &Charge3, const RVecI &Tdc3, const RVecF &Charge4, const RVecI &Tdc4, const RVecF &Charge5, const RVecI &Tdc5, int index, float min_charge =0)
+const RVecF &Charge3, const RVecI &Tdc3, const RVecF &Charge4, const RVecI &Tdc4, const RVecF &Charge5, const RVecI &Tdc5, int index, float min_charge =2000)
 {
 
   float max_charge =0;
