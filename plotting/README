@@ -1,0 +1,1 @@
+If it segfaulted you need to source or fix setEnv.sh so it points to the right path
