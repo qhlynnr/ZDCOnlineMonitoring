@@ -111,7 +111,7 @@ map<int, bxSchemeBits> getBxScheme(string schemeCSV)
 // input: folder of l1ntuples to read from - must contain the branches specified above
 // verbose: whether or not to print out the full output (error messgaes will always be printed)
 int plotZDCEmu(
-	       char const *input = "/eos/cms/store/group/phys_heavyions/cmcginn/Run2026/HIPhysicsRawPrime10/404/157/") {
+	       char const *input = "/eos/cms/store/group/phys_heavyions/cmcginn/Run2026/HIPhysicsRawPrime10/404/197/") {
 
   cout << "Running over " << input << endl;
 
@@ -156,6 +156,18 @@ int plotZDCEmu(
   runNumToFill["399543"] = "11297";
   //2026 runToFills
   runNumToFill["404157"] = "11771";//spurious
+  runNumToFill["404186"] = "11772";
+  runNumToFill["404187"] = "11772";
+  runNumToFill["404188"] = "11772";
+  runNumToFill["404189"] = "11772";
+  runNumToFill["404190"] = "11772";
+  runNumToFill["404191"] = "11772";
+  runNumToFill["404192"] = "11772";
+  runNumToFill["404193"] = "11772";
+  runNumToFill["404194"] = "11772";
+  runNumToFill["404195"] = "11772";
+  runNumToFill["404196"] = "11772";
+  runNumToFill["404197"] = "11772";
 
   map<string, string> fillToBunches;
   //2025 fillsToBunches
@@ -171,6 +183,7 @@ int plotZDCEmu(
   fillToBunches["11297"] = "204";
   //2026 fillsToBunches
   fillToBunches["11771"] = "6";//spurious
+  fillToBunches["11772"] = "6";//spurious
 
   string fill = runNumToFill[runNum];
   if(fill.size() == 0){cout << "Fill for run=" << runNum << " not set. return 1" << endl; return 1;}
