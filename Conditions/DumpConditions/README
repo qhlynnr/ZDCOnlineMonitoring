@@ -1,0 +1,3 @@
+input_tags.txt contains the input HCAL tags that are used as a base to add ZDC channels.
+run_makeDump.sh dumps HCAL conditions for all 13 tags from the database with the corresponding IOV.
+ZDC_full and ZDC_planB directories have corresponding ZDC_data (full ZDC with RPD) and ZDC_EM_HAD_data (no RPD) tags dumped from the database. 

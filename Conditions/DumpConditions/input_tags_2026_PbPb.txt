@@ -1,0 +1,6 @@
+ChannelQuality	HcalChannelQuality_v1.0_prompt	404230
+ElectronicsMap	HcalElectronicsMap_v1.0_prompt	404230
+Gains	HcalGains_v1.0_prompt	404230
+Pedestals HcalPedestals_ADC_v8.0_hlt	404230
+PedestalWidths HcalPedestalWidths_ADC_v8.0_hlt	404230
+
