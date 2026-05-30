@@ -30,6 +30,11 @@
 #include <string>
 #include <vector>
 
+#include <chrono>
+#include <ctime>
+#include "TSystem.h"
+
+
 //Adding JSON reader for 2025 datataking
 #include "include/JSON_handler.h"
 
@@ -110,32 +115,60 @@ map<int, bxSchemeBits> getBxScheme(string schemeCSV)
 // input: folder of l1ntuples to read from - must contain the branches specified above
 // verbose: whether or not to print out the full output (error messgaes will always be printed)
 
-int plotZDCEmuLoop() {
+int plotZDCEmuLoop(
+                    vector<string> lsNumSetVector = {"0069","0070",
+                    "0071","0072","0073","0074","0075","0076","0077","0078","0079",
+                    "0080","0081","0082","0083","0084","0085","0086","0087","0088","0089","0090",
+                    "0091","0092","0093","0094","0095","0096","0097","0098","0099","0100","0101",
+                    "0102","0103","0104","0105","0106","0107","0108","0109","0110","0111","0112"
+                    },
+                  string intxtfilename = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/Forward_394.txt",
+                  string key = "PhysicsHIForward") {
 
+    int fitxmin1n = 2000;
+    int fitymin1n = 4000;
+
+    int fitxmin2n = 5000;
+    int fitymin2n = 6500;
+                    
+    int fitxmin3n = 8000;
+    int fitymin3n = 9000;
+
+    int fitxmin4n = 11000;
+    int fitymin4n = 12000;
     // const char *textfilewithfolders = "/eos/cms/store/group/phys_heavyions/cmcginn/Run2026/PhysicsHIPhysicsRawPrime10/404/195/"
 
+    cout << "L" << __LINE__ << endl;
 
-    string outDirPlot = "/eos/cms/store/group/phys_heavyions/xirong/ZDCNeutronPeakPlots/";
+    cout << "L" << __LINE__ << endl;
+  
     std::vector<std::string> folderNames;
-    std::ifstream file("AllFolders.txt");
+    std::ifstream file(intxtfilename);
 
     std::string line;
+    bool isGoodKey = true;
     while (std::getline(file, line)) {
-        if (!line.empty())
-            folderNames.push_back(line);
+        if (!line.empty()){
+          if (line.back() == ':'){
+            line.pop_back();
+          }
+          cout << "line: " << line << endl;
+          if (line.find(key) == std::string::npos){
+            std::cout << "Bad Key: Fix" << endl;
+            return 1;
+          }
+          folderNames.push_back(line);
+        }
     }
 
     cout << "Number of folder" << folderNames.size() << endl;
 
 
-  //Define the format you will save to
-  vector<string> extensions = {"png"};//, "C"}; //add the .C output if you want to do rapid edits after the fact
-  string pdName = "PhysicsHIPhysicsRawPrime";//Have to replace this for alt pds
+    //Define the format you will save to
+    vector<string> extensions = {"png","C"}; //add the .C output if you want to do rapid edits after the fact
 
-  //Try to extract the run number automatically from the path
-  const string outFileName = "output/plotZDCEmuHists_" + pdName + "_RunAll.root";
-  vector<string> files;
-
+    vector<string> files;
+    vector<string> files_lumisections = {};
     //Some auto-handling of things link run->Fill, nBunches, etc.
     map<string, string> runNumToFill;
     //2025 runToFills
@@ -150,6 +183,8 @@ int plotZDCEmuLoop() {
     runNumToFill["399588"] = "11304";
     runNumToFill["399572"] = "11303";//CMS VdM
     runNumToFill["399543"] = "11297";
+    runNumToFill["404394"] = "11794";
+  
     //2026 runToFills
     runNumToFill["404157"] = "11771";//spurious
     runNumToFill["404186"] = "11772";
@@ -164,6 +199,9 @@ int plotZDCEmuLoop() {
     runNumToFill["404195"] = "11772";
     runNumToFill["404196"] = "11772";
     runNumToFill["404197"] = "11772";
+    runNumToFill["404338"] = "11787";
+    runNumToFill["404359"] = "11791";
+    
 
     map<string, string> fillToBunches;
     //2025 fillsToBunches
@@ -180,6 +218,9 @@ int plotZDCEmuLoop() {
     //2026 fillsToBunches
     fillToBunches["11771"] = "6";//spurious
     fillToBunches["11772"] = "6";//spurious
+    fillToBunches["11787"] = "58";
+    fillToBunches["11791"] = "338";
+    fillToBunches["11794"] = "642";
 
 
     bool isMB = false;
@@ -194,15 +235,17 @@ int plotZDCEmuLoop() {
     JSON_handler dcs;//give a file path argument for overriding default
 
   // START LOOP HERE//
+
   string runYear = "2026";
   string runNum = "";
+  string lsNum = "9999";
+  string pdName = key;
+
   for (int i = 0; i < folderNames.size(); i++){
     string input = folderNames[i];
     string inputStr = string(input);
 
     string pdnum = "";
-    string key = "PhysicsHIPhysicsRawPrime";
-
     size_t pos = inputStr.find(key);
     if (pos != string::npos) {
         pos += key.length();
@@ -212,29 +255,32 @@ int plotZDCEmuLoop() {
             ++pos;
         }
     }
-    cout << "pdnum: " << pdnum << endl;
-
     runNum = inputStr;
     //Consider: ExpressCosmics, HIExpress, HIForwardX
     string formatInput = "/eos/cms/store/group/phys_heavyions/cmcginn/Run" + runYear + "/" + pdName + pdnum + "/";
-    
-    cout << "Running over:  " << input << endl;
-    cout << "Format Input: " << formatInput << endl;
+   /* std::regex runRe("(\\d{3})(?:/|/:)?$");
+    std::smatch runMatch;
 
+    if (std::regex_search(runNum, runMatch, runRe)) {
+        runNum = runMatch[1];
+        cout << "Run Num:" << runNum << end
+    }    */
     if(runNum.find(formatInput) != string::npos){
         runNum.replace(0, formatInput.size(), "");
 
         while(runNum.find("/") != string::npos){
-        runNum.replace(runNum.find("/"), 1, "");
+          runNum.replace(runNum.find("/"), 1, "");
+        }
+        while(runNum.find(":") != string::npos){
+          runNum.replace(runNum.find(":"), 1, "");
         }
     }
     else{
         cout << "input '" << input << "' format unrecognized, return 1" << endl;
+        cout << "Format " << formatInput << endl;
         return 1;
     }
-    cout << "Input: " << input << endl;
     GetFiles(input.c_str(), files);
-
     //Since we process per run, lets test if the run is good
 
     /*if(applyJSON){
@@ -247,22 +293,48 @@ int plotZDCEmuLoop() {
         cout << __PRETTY_FUNCTION__ << " WARNING: JSON IS DISABLED - BE CAREFUL INTERPRETING RESULTS! Proceeding..." << endl;
     }*/
   
-    isMB = inputStr.find("HIPhysicsRawPrime");
+    isMB = inputStr.find("HIPhysicsRawPrime") != string::npos;
     isZeroBias = inputStr.find("PhysicsHIForward") != string::npos;
     isEmptyBunches = inputStr.find("HIExpress") != string::npos;
     isCosmics = inputStr.find("ExpressCosmics") != string::npos;
   }  
 
-  cout << "[Debug] Files to be processed: " << endl;
-    for (auto const & file : files){
-        cout << "File: " << file << endl;
+    cout << "[Debug] Files to be processed: " << endl;
+
+    for (string file : files){
+      cout << file << endl;
+    }
+    cout << "L" << __LINE__ << endl;
+    for (string lsNumSet : lsNumSetVector){
+      cout << "ls Num set:" << lsNumSet << endl;
+      for (auto const & file : files){
+          std::regex re("ls(\\d+)");
+          std::smatch match;
+          if (std::regex_search(file, match, re)) {
+            lsNum = match[1];
+          }
+          if (lsNum == lsNumSet){
+              files_lumisections.push_back(file);
+            }
+          }
+      }
+    string lsNumStr = lsNumSetVector[0] + "-" + lsNumSetVector.back();
+    cout << "Files with lumisection:" << lsNumStr << endl;
+    for (auto const & file : files_lumisections){
+        cout << file << endl;
     }
 
+    cout << "runnum: " << runNum << endl;
     string fill = runNumToFill[runNum]; 
-    if(fill.size() == 0){cout << "Fill not set. return 1" << endl; return 1;}
+    cout << "fill: " << fill << endl;
+    if(fill.size() == 0){cout << "Fill not set. for run " << runNum << " return 1 "<< endl; return 1;}
 
     string nBunch = fillToBunches[fill];
     if(nBunch.size() == 0){cout << "NBunch for fill=" << fill << " not set. return 1" << endl; return 1;}
+    string outDirPlot = "/eos/cms/store/group/phys_heavyions/xirong/ZDCNeutronPeakPlots/Run" + runNum + "ls" + lsNumStr + key + "/";
+    if (gSystem->AccessPathName(outDirPlot.c_str())) {
+        gSystem->mkdir(outDirPlot.c_str(), kTRUE);
+    }
 
     //BX scheme for fills where we have it
     bool doBxMap = false;
@@ -395,38 +467,17 @@ int plotZDCEmuLoop() {
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);
 
-    // Lynn fix: Changing tag
-    string tag = "Run" + runNum;
-    string lumiStr = "Run: " + runNum + ", Fill: " + fill + ", nBunches: " + nBunch;
-    string cmsLabel = "#bf{CMS}#it{Preliminary} " + runYear + " PbPb (5.36 TeV) " + globalLabel;
-    cout << __LINE__ << endl;
-    //  if(isZeroBias) cmsLabel = cmsLabel + " ZeroBias";
-    //  else if(isEmptyBunches) cmsLabel = cmsLabel + " Empty Bx";
-
-    const double topY = 0.86;
-    const double bottomY = 0.36;
-    const double xLatex = 0.17;
-
-    TLatex* cms = new TLatex(0.10,0.92,cmsLabel.c_str());
-    cms->SetNDC();
-    cms->SetTextSize(0.05);
-    cms->SetTextFont(42);
-
-    TLatex* lumi = new TLatex(xLatex,topY,lumiStr.c_str());
-    lumi->SetNDC();
-    lumi->SetTextSize(0.035);
-    lumi->SetTextFont(42);
     cout << __LINE__ << endl;
   /* read in the unpacked information */
   TChain zdcChain("zdcanalyzer/zdcrechit");
-  FillChain(zdcChain, files);
+  FillChain(zdcChain, files_lumisections);
   TTreeReader zdcReader(&zdcChain);
   TTreeReaderValue<float> sumPlus(zdcReader, "sumPlus");
   TTreeReaderValue<float> sumMinus(zdcReader, "sumMinus");
 
   /* read in the unpacked information */
   TChain unpackerChain("l1UpgradeTree/L1UpgradeTree");
-  FillChain(unpackerChain, files);
+  FillChain(unpackerChain, files_lumisections);
   TTreeReader unpackerReader(&unpackerChain);
   TTreeReaderValue<unsigned short> nEtSums(unpackerReader, "nSums");
   TTreeReaderValue<vector<float> > unpackerEtSum(unpackerReader, "sumEt");
@@ -440,7 +491,7 @@ int plotZDCEmuLoop() {
   TTreeReaderValue<vector<float>>	jetEta(unpackerReader, "jetEta");
 
   TChain hiEventChain("l1EventTree/L1EventTree");
-  FillChain(hiEventChain, files);
+  FillChain(hiEventChain, files_lumisections);
   TTreeReader eventReader(&hiEventChain);
   TTreeReaderValue<uint> runNumber(eventReader, "run");
   TTreeReaderValue<ULong64_t> eventNumber(eventReader, "event");
@@ -448,7 +499,7 @@ int plotZDCEmuLoop() {
   TTreeReaderValue<uint> bx(eventReader, "bx");
 
   TChain emuChain("l1UpgradeEmuTree/L1UpgradeTree");
-  FillChain(emuChain, files);
+  FillChain(emuChain, files_lumisections);
   TTreeReader emuReader(&emuChain);
   TTreeReaderValue<vector<short>> emuSum(emuReader, "sumZDCIEt");
   TTreeReaderValue<vector<short>> emuType(emuReader, "sumZDCType");
@@ -457,7 +508,7 @@ int plotZDCEmuLoop() {
 
    /* read in information on the emulated trigger fires*/
   TChain l1TrigChain("l1uGTTree/L1uGTTree");
-  FillChain(l1TrigChain, files);
+  FillChain(l1TrigChain, files_lumisections);
   TTreeReader emuTrigReader(&l1TrigChain);
   TTreeReaderValue<vector<bool>> initialTrigDecision(emuTrigReader, "m_algoDecisionFinal");
 
@@ -466,6 +517,10 @@ int plotZDCEmuLoop() {
   map<string, TH1D*> hZDCM_Emu;
   map<string, TH1D*> hZDCP_withTrig;
   map<string, TH1D*> hZDCM_withTrig;
+
+  map<string, TH1D*> hZDCP_withTrig_nocut;
+  map<string, TH1D*> hZDCM_withTrig_nocut;
+
   map<string, TH1D*> hZDCP;
   map<string, TH1D*> hZDCM;
   map<string, TH1D*> hZDCP_EmuScaled;
@@ -500,6 +555,10 @@ int plotZDCEmuLoop() {
     hZDCM_Emu[trig.first] = new TH1D(("hZDCM_Emu_" + trig.first).c_str(), "ZDC Minus Emulated", 100, 0, maxZDCESum);
     hZDCP_withTrig[trig.first] = new TH1D(("hZDCP_withTrig_" + trig.first).c_str(), "ZDC Plus", 100, 0, 15000);
     hZDCM_withTrig[trig.first] = new TH1D(("hZDCM_withTrig_" + trig.first).c_str(), "ZDC Minus", 100, 0, 15000);
+    
+    hZDCP_withTrig_nocut[trig.first] = new TH1D(("hZDCP_withTrig_nocut_" + trig.first).c_str(), "ZDC Plus", 100, 0, 15000);
+    hZDCM_withTrig_nocut[trig.first] = new TH1D(("hZDCM_withTrig_nocut_" + trig.first).c_str(), "ZDC Minus", 100, 0, 15000);
+
     hZDCP[trig.first] = new TH1D(("hZDCP_" + trig.first).c_str(), "ZDC Plus", 100, 0, 15000);
     hZDCM[trig.first] = new TH1D(("hZDCM_" + trig.first).c_str(), "ZDC Minus", 100, 0, 15000);
     hZDCP_EmuScaled[trig.first] = new TH1D(("hZDCP_EmuScaled_" + trig.first).c_str(), "ZDC Plus", 100, 0, 15000);
@@ -546,19 +605,55 @@ int plotZDCEmuLoop() {
     hZDCAsymCorrJet[trig.first] = new TH2D(("AsymmCorrJet_" + trig.first).c_str(), "",  40, -5.0, 5.0,40, -2, 2);
   }
 
-  //Counter to not spam i/o w/ json skipping messages
-  map<int, int> runJSONMessage;
+    //Counter to not spam i/o w/ json skipping messages
+    map<int, int> runJSONMessage;
 
-  uint minBx = 100000;
-  uint maxBx = 0;
+    uint minBx = 100000;
+    uint maxBx = 0;
 
-  Long64_t totalEvents = emuReader.GetEntries(true);
+    Long64_t totalEvents = emuReader.GetEntries(true);
+
+    // Store start time point
+    auto start = std::chrono::steady_clock::now();
+    // Print wall-clock start time
+    std::time_t start_time = std::time(nullptr);
+    std::cout << "Start time: " << std::ctime(&start_time);
+    
+    //Try to extract sthe run number automatically from the path
+    const string outFileName = "output/plotZDCEmuHists_" + pdName + "_Run" + runNum + "ls" + lsNumStr + ".root";
+
+    string tag = "Run" + runNum + "ls" + lsNumStr;
+    string lumiStr = "Run: " + runNum + ", Fill: " + fill + ", nBunches: " + nBunch;
+    string cmsLabel = "#bf{CMS}#it{Work-in-Progress} " + runYear + " PbPb (5.36 TeV) " + globalLabel;
+    cout << __LINE__ << endl;
+    //  if(isZeroBias) cmsLabel = cmsLabel + " ZeroBias";
+    //  else if(isEmptyBunches) cmsLabel = cmsLabel + " Empty Bx";
+
+    const double topY = 0.86;
+    const double bottomY = 0.36;
+    const double xLatex = 0.17;
+
+    TLatex* cms = new TLatex(0.10,0.92,cmsLabel.c_str());
+    cms->SetNDC();
+    cms->SetTextSize(0.05);
+    cms->SetTextFont(42);
+
+    TLatex* lumi = new TLatex(xLatex,topY,lumiStr.c_str());
+    lumi->SetNDC();
+    lumi->SetTextSize(0.035);
+    lumi->SetTextFont(42);
+
+    int L1ECutValue = 40;
   for (Long64_t i = 0; i < totalEvents; i++) {
     emuReader.Next(); emuTrigReader.Next(); zdcReader.Next(); unpackerReader.Next(); eventReader.Next();
     // zero bias
 
-    if (i % 10000 == 0) {
-      cout << "Event " << i << endl;
+    if (i % 100000 == 0) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start);
+        std::cout << "Loop " << i << " | time elapsed = "
+                  << elapsed.count()
+                  << " s\n";
     }
 
     //correct the bx value; in OMS range is 0-3563, in L1EventTree 1-3564
@@ -637,20 +732,22 @@ int plotZDCEmuLoop() {
 
     for(auto const & trigVal : trigDecisionMap){
       if(trigVal.second){
-	if(emuPlus > 40)hZDCP_withTrig[trigVal.first]->Fill(*sumPlus);
-	if(emuMinus> 40)hZDCM_withTrig[trigVal.first]->Fill(*sumMinus);
+      if(emuPlus > L1ECutValue)hZDCP_withTrig[trigVal.first]->Fill(*sumPlus);
+      if(emuMinus> L1ECutValue)hZDCM_withTrig[trigVal.first]->Fill(*sumMinus);
+      hZDCP_withTrig_nocut[trigVal.first]->Fill(*sumPlus);
+      hZDCM_withTrig_nocut[trigVal.first]->Fill(*sumMinus);
 
-	hZDCM_EmuScaled[trigVal.first]->Fill(emuMinus*16);
-	hZDCP_EmuScaled[trigVal.first]->Fill(emuPlus*16);
+      hZDCM_EmuScaled[trigVal.first]->Fill(emuMinus*16);
+      hZDCP_EmuScaled[trigVal.first]->Fill(emuPlus*16);
       }
     }
 
     double maxJetEt = -1.0;
     for(int j = 0; j < *nJets; j++){
       if((*jetEt)[j] > 20){
-	for(auto const & trigVal : trigDecisionMap){
-	  if(trigVal.second) hZDCAsymCorrJet[trigVal.first]->Fill((*jetEta)[j],float(unpackerSumPlus - unpackerSumMinus)/(unpackerSumPlus + unpackerSumMinus));
-	}
+    for(auto const & trigVal : trigDecisionMap){
+      if(trigVal.second) hZDCAsymCorrJet[trigVal.first]->Fill((*jetEta)[j],float(unpackerSumPlus - unpackerSumMinus)/(unpackerSumPlus + unpackerSumMinus));
+    }
       }
     }
     for(auto const & trigVal : trigDecisionMap){
@@ -723,16 +820,31 @@ int plotZDCEmuLoop() {
     /* ZDC Emu */
     // ------------------------------------------
 
+
+    //l1MapCounter[trig.first]
+    string nEventStr = Form("nEvents: %i",l1MapCounter[trig.first]);
+    TLatex* nEvents = new TLatex(0.65,topY,nEventStr.c_str());
+    nEvents->SetNDC();
+    nEvents->SetTextSize(0.035);
+    nEvents->SetTextFont(42);
+
     TLatex* trigTex = new TLatex(xLatex,topY-0.06,trig.first.c_str());
     trigTex->SetNDC();
     trigTex->SetTextSize(0.035);
     trigTex->SetTextFont(42);
+
+    TLatex* lumisectionTex = new TLatex(xLatex,topY-0.12,("lumisection " + lsNumStr).c_str());
+    lumisectionTex->SetNDC();
+    lumisectionTex->SetTextSize(0.035);
+    lumisectionTex->SetTextFont(42);
 
     TLegend* leg = new TLegend(0.6,0.7,0.8,0.85);
     leg->SetBorderSize(0);
     leg->SetFillStyle(0);
     leg->SetTextSize(0.045);
 
+    int xmax = 14000;
+    
     TCanvas* c = new TCanvas("c","c",800,600);
     c->cd();
     c->SetTickx(1);
@@ -765,7 +877,9 @@ int plotZDCEmuLoop() {
     leg->Draw("same");
     cms->Draw("same");
     lumi->Draw("same");
+    nEvents->Draw("same");
     trigTex->Draw("same");
+    lumisectionTex->Draw("same");
     for(auto const & extStr : extensions){
       c->SaveAs(Form("%s/Online_ZDCEmu_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -797,6 +911,7 @@ int plotZDCEmuLoop() {
     l->Draw();
     leg->Draw("same");
     cms->Draw("same");
+    nEvents->Draw("same");
     lumi->Draw("same");
     trigTex->Draw("same");
     for(auto const & extStr : extensions){
@@ -826,7 +941,10 @@ int plotZDCEmuLoop() {
     //leg->Draw("same");
     cms->Draw("same");
     lumi->Draw("same");
+    nEvents->Draw("same");
     trigTex->Draw("same");
+    lumisectionTex->Draw("same");
+  
     for(auto const & extStr : extensions){
       cC->SaveAs(Form("%s/Online_CorrAsymm_%s_%s.%s", outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -854,6 +972,7 @@ int plotZDCEmuLoop() {
     //leg->Draw("same");
     cms->Draw("same");
     lumi->Draw("same");
+    nEvents->Draw("same");
     trigTex->Draw("same");
     for(auto const & extStr : extensions){
       cCj->SaveAs(Form("%s/Online_CorrAsymmJet_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
@@ -920,6 +1039,7 @@ int plotZDCEmuLoop() {
     trigTex->Draw("same");
     //leg->Draw("same");
     cms->Draw("same");
+    nEvents->Draw("same");
     for(auto const & extStr : extensions){
       cAVB->SaveAs(Form("%s/Online_AsymmVBx_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -949,6 +1069,7 @@ int plotZDCEmuLoop() {
       trigTex->Draw("same");
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxPlus_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -980,6 +1101,7 @@ int plotZDCEmuLoop() {
       trigTex->Draw("same");
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxPlusZoom_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1013,6 +1135,7 @@ int plotZDCEmuLoop() {
 
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxMinus_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1046,6 +1169,7 @@ int plotZDCEmuLoop() {
 
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxMinusZoom_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1079,6 +1203,7 @@ int plotZDCEmuLoop() {
 
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxAbs_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1112,6 +1237,7 @@ int plotZDCEmuLoop() {
 
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cAVRB->SaveAs(Form("%s/Online_AsymmVRelBxAbsZoom_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1157,6 +1283,7 @@ int plotZDCEmuLoop() {
     trigTex->Draw("same");
     //leg->Draw("same");
     cms->Draw("same");
+    nEvents->Draw("same");
     for(auto const & extStr : extensions){
       cAN->SaveAs(Form("%s/Online_AsymmNorm_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -1186,6 +1313,7 @@ int plotZDCEmuLoop() {
     cutAsymmNorm->Draw("same");
     //leg->Draw("same");
     cms->Draw("same");
+    nEvents->Draw("same");
     for(auto const & extStr : extensions){
       cANVB->SaveAs(Form("%s/Online_AsymmNormVBx_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -1217,6 +1345,7 @@ int plotZDCEmuLoop() {
       cutAsymmNorm->Draw("same");
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxPlus_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1248,6 +1377,7 @@ int plotZDCEmuLoop() {
       trigTex->Draw("same");
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       cutAsymmNorm->Draw("same");
       for(auto const & extStr : extensions){
 	    cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxPlusZoom_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
@@ -1283,6 +1413,7 @@ int plotZDCEmuLoop() {
 
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxMinus_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1315,7 +1446,7 @@ int plotZDCEmuLoop() {
       trigTex->DrawLatex(xLatex, bottomY-0.06, trigTex->GetTitle());
       cutAsymmNorm->DrawLatex(xLatex, bottomY-0.06*2.0, cutAsymmNorm->GetTitle());
       cms->Draw("same");
-
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
 	cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxMinusZoom_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
@@ -1349,8 +1480,9 @@ int plotZDCEmuLoop() {
       cutAsymmNorm->Draw("same");
       //leg->Draw("same");
       cms->Draw("same");
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
-	cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxAbs_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
+    cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxAbs_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
       delete cANVRB;
     }
@@ -1381,9 +1513,9 @@ int plotZDCEmuLoop() {
       trigTex->Draw("same");
       cutAsymmNorm->Draw("same");
       cms->Draw("same");
-
+      nEvents->Draw("same");
       for(auto const & extStr : extensions){
-	cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxAbsZoom_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
+	      cANVRB->SaveAs(Form("%s/Online_AsymmNormVRelBxAbsZoom_%s_%s.%s", outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
       delete cANVRB;
     }
@@ -1392,10 +1524,10 @@ int plotZDCEmuLoop() {
     /* Online to GeV */
     // ------------------------------------------
 
-    TLegend* leg2 = new TLegend(0.6,0.7,0.8,0.85);
+    TLegend* leg2 = new TLegend(0.5,0.6,0.8,0.85);
     leg2->SetBorderSize(0);
     leg2->SetFillStyle(0);
-    leg2->SetTextSize(0.045);
+    leg2->SetTextSize(0.03);
 
     TCanvas* c2 = new TCanvas("c2","c2",800,600);
     c2->cd();
@@ -1413,19 +1545,85 @@ int plotZDCEmuLoop() {
     hZDCP_withTrig[trig.first]->GetXaxis()->SetTitleSize(0.05);
     hZDCP_withTrig[trig.first]->SetMarkerStyle(20);
 
-    TF1* fit1n = new TF1("fit1n", "gaus", 1000, 3000);
-    fit1n->SetLineColor(kBlack);
-    fit1n->SetLineWidth(2);
-    fit1n->SetLineStyle(2);
-    fit1n->SetRange(0.,6000);
-    hZDCP_withTrig[trig.first]->Fit(fit1n, "0", "", 1000, 3000);
+    TF1* fit1nP = new TF1("fit1nP", "gaus", fitxmin1n, fitymin1n);
+    fit1nP->SetLineColor(kRed+2);
+    fit1nP->SetLineWidth(2);
+    fit1nP->SetLineStyle(2);
+    fit1nP->SetRange(0.,6000);
+    hZDCP_withTrig[trig.first]->Fit(fit1nP, "0", "", fitxmin1n, fitymin1n);
 
-    TF1* fit1nM = new TF1("fit1nM", "gaus",  1000, 3000);
-    fit1nM->SetLineColor(kGray+2);
+    TF1* fit1nM = new TF1("fit1nM", "gaus",  fitxmin1n, fitymin1n);
+    fit1nM->SetLineColor(kBlue+2);
     fit1nM->SetLineWidth(2);
     fit1nM->SetLineStyle(2);
     fit1nM->SetRange(0.,6000);
-    hZDCM_withTrig[trig.first]->Fit(fit1nM, "0", "", 1000, 3000);
+    hZDCM_withTrig[trig.first]->Fit(fit1nM, "0", "", fitxmin1n, fitymin1n);
+
+    TF1* fit1nP2 = new TF1("fit1nP2", "gaus", fitxmin2n, fitymin2n);
+    fit1nP2->SetLineColor(kRed+2);
+    fit1nP2->SetLineWidth(2);
+    fit1nP2->SetLineStyle(2);
+    fit1nP2->SetRange(0.,14000);
+    hZDCP_withTrig[trig.first]->Fit(fit1nP2, "0", "", fitxmin2n, fitymin2n);
+
+    TF1* fit1nM2 = new TF1("fit1nM2", "gaus",  fitxmin2n, fitymin2n);
+    fit1nM2->SetLineColor(kBlue+2);
+    fit1nM2->SetLineWidth(2);
+    fit1nM2->SetLineStyle(2);
+    fit1nM2->SetRange(0.,14000);
+    hZDCM_withTrig[trig.first]->Fit(fit1nM2, "0", "", fitxmin2n, fitymin2n);
+
+    TF1* fit1nM3 = new TF1("fit1nM3", "gaus",  fitxmin3n, fitymin3n);
+    fit1nM3->SetLineColor(kBlue+2);
+    fit1nM3->SetLineWidth(2);
+    fit1nM3->SetLineStyle(2);
+    fit1nM3->SetRange(0.,14000);
+    hZDCM_withTrig[trig.first]->Fit(fit1nM3, "0", "", fitxmin3n, fitymin3n);
+
+    TF1* fit1nP3 = new TF1("fit1nP3", "gaus", fitxmin3n, fitymin3n);
+    fit1nP3->SetLineColor(kRed+2);
+    fit1nP3->SetLineWidth(2);
+    fit1nP3->SetLineStyle(2);
+    fit1nP3->SetRange(0.,14000);
+    hZDCP_withTrig[trig.first]->Fit(fit1nP3, "0", "", fitxmin3n, fitymin3n);
+
+    TF1* fit1nM4 = new TF1("fit1nM4", "gaus",  fitxmin4n, fitymin4n);
+    fit1nM4->SetLineColor(kBlue+2);
+    fit1nM4->SetLineWidth(2);
+    fit1nM4->SetLineStyle(2);
+    fit1nM4->SetRange(0.,14000);
+    hZDCM_withTrig[trig.first]->Fit(fit1nM4, "0", "", fitxmin4n, fitymin4n);
+
+    TF1* fit1nP4 = new TF1("fit1nP4", "gaus", fitxmin4n, fitymin4n);
+    fit1nP4->SetLineColor(kRed+2);
+    fit1nP4->SetLineWidth(2);
+    fit1nP4->SetLineStyle(2);
+    fit1nP4->SetRange(0.,14000);
+    hZDCP_withTrig[trig.first]->Fit(fit1nP4, "0", "", fitxmin4n, fitymin4n);
+
+    double muM1 = fit1nM->GetParameter(1);
+    double sigM1 = fit1nM->GetParameter(2);
+
+    double muP1 = fit1nP->GetParameter(1);
+    double sigP1 = fit1nP->GetParameter(2);
+
+    double muM2  = fit1nM2->GetParameter(1);
+    double sigM2 = fit1nM2->GetParameter(2);
+
+    double muP2  = fit1nP2->GetParameter(1);
+    double sigP2 = fit1nP2->GetParameter(2);
+
+    double muM3  = fit1nM3->GetParameter(1);
+    double sigM3 = fit1nM3->GetParameter(2);
+
+    double muP3  = fit1nP3->GetParameter(1);
+    double sigP3 = fit1nP3->GetParameter(2);
+
+    double muP4  = fit1nP4->GetParameter(1);
+    double sigP4 = fit1nP4->GetParameter(2);
+
+    double muM4  = fit1nM4->GetParameter(1);
+    double sigM4 = fit1nM4->GetParameter(2);
 
     // zdc minus
     hZDCM_withTrig[trig.first]->SetLineColor(kBlue);
@@ -1433,23 +1631,379 @@ int plotZDCEmuLoop() {
     hZDCM_withTrig[trig.first]->SetMarkerStyle(20);
     hZDCM_withTrig[trig.first]->GetXaxis()->SetTitle("ZDC Offline Energy Sum (GeV)");
     hZDCM_withTrig[trig.first]->GetXaxis()->SetTitleSize(0.05);
-    hZDCM_withTrig[trig.first]->GetXaxis()->SetRangeUser(0, 10000);
-    hZDCM_withTrig[trig.first]->GetYaxis()->SetRangeUser(1, 1e5);
+    hZDCM_withTrig[trig.first]->GetXaxis()->SetRangeUser(0, xmax);
+
+    double ymax1 = std::max(hZDCM_withTrig[trig.first]->GetMaximum(), hZDCP_withTrig[trig.first]->GetMaximum()) * 1.5;
+    hZDCM_withTrig[trig.first]->GetYaxis()->SetRangeUser(1, ymax1);
     hZDCM_withTrig[trig.first]->Draw();
     hZDCP_withTrig[trig.first]->Draw("same");
     // cout << "Integral Plus: " << hZDCP_withTrig->Integral() << endl;
     // cout << "Integral Minus: " << hZDCM_withTrig->Integral() << endl;
 
+    double redChi1M = fit1nM->GetChisquare() / fit1nM->GetNDF();
+    double redChi1P = fit1nP->GetChisquare() / fit1nP->GetNDF();
+    double redChi1M2 = fit1nM2->GetChisquare() / fit1nM2->GetNDF();
+    double redChi1P2 = fit1nP2->GetChisquare() / fit1nP2->GetNDF();
+
+    cout << "Reduced Chi Squared of fits (with cut):" << endl; 
+    cout << "First Gaussian (1000-3000): +: " << redChi1P << " -: " << redChi1M << endl;
+    cout << "Second Gaussian (3000-7000): +: " << redChi1P2 << " -: " << redChi1P2 << endl;
+    cout << "Third Gaussian (6000-9000): +: " << redChi1P2 << " -: " << redChi1P2 << endl;
+
     leg2->AddEntry(hZDCP_withTrig[trig.first],"ZDC Plus ","l");
-    leg2->AddEntry(hZDCM_withTrig[trig.first],"ZDC Minus","l");
+    leg2->AddEntry(hZDCM_withTrig[trig.first],"ZDC Minus ","l");
+    leg2->AddEntry(fit1nM,Form("ZDC- peak 1n: #mu=%.1f, #sigma=%.1f", muM1, sigM1), "l");
+    leg2->AddEntry(fit1nP,Form("ZDC+ peak 1n: #mu=%.1f, #sigma=%.1f", muP1, sigP1), "l");
+    leg2->AddEntry(fit1nM2,Form("ZDC- peak 2n: #mu=%.1f, #sigma=%.1f", muM2, sigM2), "l");
+    leg2->AddEntry(fit1nP2,Form("ZDC+ peak 2n: #mu=%.1f, #sigma=%.1f", muP2, sigP2), "l");
+    leg2->AddEntry(fit1nM3,Form("ZDC- peak 3n: #mu=%.1f, #sigma=%.1f", muM3, sigM3), "l");
+    leg2->AddEntry(fit1nP3,Form("ZDC+ peak 3n: #mu=%.1f, #sigma=%.1f", muP3, sigP3), "l");
+    leg2->AddEntry(fit1nM4,Form("ZDC- peak 4n: #mu=%.1f, #sigma=%.1f", muM4, sigM4), "l");
+    leg2->AddEntry(fit1nP4,Form("ZDC+ peak 4n: #mu=%.1f, #sigma=%.1f", muP4, sigP4), "l");
+
     leg2->Draw("same");
     cms->Draw("same");
+    nEvents->Draw("same");
     lumi->Draw("same");
     trigTex->Draw("same");
-    fit1n->Draw("same");
+    fit1nP->Draw("same");
     fit1nM->Draw("same");
+    fit1nP2->Draw("same");
+    fit1nM2->Draw("same");
+    fit1nP3->Draw("same");
+    fit1nM3->Draw("same");
+    fit1nP4->Draw("same");
+    fit1nM4->Draw("same");
+    lumisectionTex->Draw("same");
+
     for(auto const & extStr : extensions){
       c2->SaveAs(Form("%s/Online_ZDCNeutronWithTrig_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
+    }
+
+
+    // ------------------------------------------
+    /* Online to GeV (nocut)*/
+    // ------------------------------------------
+    TLegend* leg2_nocut = new TLegend(0.5,0.6,0.8,0.85);
+    leg2_nocut->SetBorderSize(0);
+    leg2_nocut->SetFillStyle(0);
+    leg2_nocut->SetTextSize(0.03);
+
+    TCanvas* c_nocut = new TCanvas("c_nocut","c_nocut",800,600);
+    c_nocut->cd();
+    c_nocut->SetTickx(1);
+    c_nocut->SetTicky(1);
+    c_nocut->SetLogy();
+    c_nocut->SetTopMargin(0.09);
+    c_nocut->SetBottomMargin(0.11);
+    c_nocut->SetLeftMargin(0.09);
+    c_nocut->SetRightMargin(0.05);
+
+    // zdc plus
+    hZDCP_withTrig_nocut[trig.first]->SetLineColor(kRed);
+    hZDCP_withTrig_nocut[trig.first]->SetLineWidth(2);
+    hZDCP_withTrig_nocut[trig.first]->GetXaxis()->SetTitleSize(0.05);
+    hZDCP_withTrig_nocut[trig.first]->SetMarkerStyle(20);
+
+    // zdc minus
+    hZDCM_withTrig_nocut[trig.first]->SetLineColor(kBlue);
+    hZDCM_withTrig_nocut[trig.first]->SetLineWidth(2);
+    hZDCM_withTrig_nocut[trig.first]->SetMarkerStyle(20);
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetTitle("ZDC Offline Energy Sum (GeV)");
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetTitleSize(0.05);
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetRangeUser(0, xmax);
+
+    hZDCM_withTrig_nocut[trig.first]->Draw();
+    hZDCP_withTrig_nocut[trig.first]->Draw("same");
+
+    double ymax = std::max(hZDCM_withTrig_nocut[trig.first]->GetMaximum(), hZDCP_withTrig_nocut[trig.first]->GetMaximum()) * 1.5;
+    hZDCM_withTrig_nocut[trig.first]->GetYaxis()->SetRangeUser(1, ymax);
+
+    TF1* fit1nP_nocut = new TF1("fit1nP_nocut", "gaus", 1000, 3000);
+    fit1nP_nocut->SetLineColor(kRed+2);
+    fit1nP_nocut->SetLineWidth(2);
+    fit1nP_nocut->SetLineStyle(2);
+    fit1nP_nocut->SetRange(0.,6000);
+    hZDCP_withTrig_nocut[trig.first]->Fit(fit1nP_nocut, "0", "", 1000, 3000);
+
+    TF1* fit1nM_nocut = new TF1("fit1nM_nocut", "gaus",  1000, 3000);
+    fit1nM_nocut->SetLineColor(kBlue+2);
+    fit1nM_nocut->SetLineWidth(2);
+    fit1nM_nocut->SetLineStyle(2);
+    fit1nM_nocut->SetRange(0.,6000);
+    hZDCM_withTrig_nocut[trig.first]->Fit(fit1nM_nocut, "0", "", 1000, 3000);
+
+    TF1* fit1nP2_nocut = new TF1("fit1nP2_nocut", "gaus", fitxmin2n, fitymin2n);
+    fit1nP2_nocut->SetLineColor(kRed+2);
+    fit1nP2_nocut->SetLineWidth(2);
+    fit1nP2_nocut->SetLineStyle(2);
+    fit1nP2_nocut->SetRange(0.,14000);
+    hZDCP_withTrig_nocut[trig.first]->Fit(fit1nP2_nocut, "0", "", fitxmin2n, fitymin2n);
+
+    TF1* fit1nM2_nocut = new TF1("fit1nM2_nocut", "gaus",  fitxmin2n, fitymin2n);
+    fit1nM2_nocut->SetLineColor(kBlue+2);
+    fit1nM2_nocut->SetLineWidth(2);
+    fit1nM2_nocut->SetLineStyle(2);
+    fit1nM2_nocut->SetRange(0.,14000);
+    hZDCM_withTrig_nocut[trig.first]->Fit(fit1nM2_nocut, "0", "", fitxmin2n, fitymin2n);
+
+    TF1* fit1nM3_nocut = new TF1("fit1nM3_nocut", "gaus",  fitxmin3n, fitymin3n);
+    fit1nM3_nocut->SetLineColor(kBlue+2);
+    fit1nM3_nocut->SetLineWidth(2);
+    fit1nM3_nocut->SetLineStyle(2);
+    fit1nM3_nocut->SetRange(0.,14000);
+    hZDCM_withTrig_nocut[trig.first]->Fit(fit1nM3_nocut, "0", "", fitxmin3n, fitymin3n);
+
+    TF1* fit1nP3_nocut = new TF1("fit1nP3_nocut", "gaus", fitxmin3n, fitymin3n);
+    fit1nP3_nocut->SetLineColor(kRed+2);
+    fit1nP3_nocut->SetLineWidth(2);
+    fit1nP3_nocut->SetLineStyle(2);
+    fit1nP3_nocut->SetRange(0.,14000);
+    hZDCP_withTrig_nocut[trig.first]->Fit(fit1nP3_nocut, "0", "", fitxmin3n, fitymin3n);
+
+    TF1* fit1nM4_nocut = new TF1("fit1nM4_nocut", "gaus",  fitxmin4n, fitymin4n);
+    fit1nM4_nocut->SetLineColor(kBlue+2);
+    fit1nM4_nocut->SetLineWidth(2);
+    fit1nM4_nocut->SetLineStyle(2);
+    fit1nM4_nocut->SetRange(0.,14000);
+    hZDCM_withTrig_nocut[trig.first]->Fit(fit1nM4_nocut, "0", "", fitxmin4n, fitymin4n);
+
+    TF1* fit1nP4_nocut = new TF1("fit1nP4_nocut", "gaus", fitxmin4n, fitymin4n);
+    fit1nP4_nocut->SetLineColor(kRed+2);
+    fit1nP4_nocut->SetLineWidth(2);
+    fit1nP4_nocut->SetLineStyle(2);
+    fit1nP4_nocut->SetRange(0.,14000);
+    hZDCP_withTrig_nocut[trig.first]->Fit(fit1nP4_nocut, "0", "", fitxmin4n, fitymin4n);
+
+    muM1 = fit1nM_nocut->GetParameter(1);
+    sigM1 = fit1nM_nocut->GetParameter(2);
+
+    muP1 = fit1nP_nocut->GetParameter(1);
+    sigP1 = fit1nP_nocut->GetParameter(2);
+
+    muM2  = fit1nM2_nocut->GetParameter(1);
+    sigM2 = fit1nM2_nocut->GetParameter(2);
+
+    muP2  = fit1nP2_nocut->GetParameter(1);
+    sigP2 = fit1nP2_nocut->GetParameter(2);
+
+    muM3  = fit1nM3_nocut->GetParameter(1);
+    sigM3 = fit1nM3_nocut->GetParameter(2);
+
+    muP3  = fit1nP3_nocut->GetParameter(1);
+    sigP3 = fit1nP3_nocut->GetParameter(2);
+
+    muP4  = fit1nP4_nocut->GetParameter(1);
+    sigP4 = fit1nP4_nocut->GetParameter(2);
+
+    muM4  = fit1nM4_nocut->GetParameter(1);
+    sigM4 = fit1nM4_nocut->GetParameter(2);
+
+    // cout << "Integral Plus: " << hZDCP_withTrig->Integral() << endl;
+    // cout << "Integral Minus: " << hZDCM_withTrig->Integral() << endl;
+
+    fit1nP_nocut->Draw("same");
+    fit1nM_nocut->Draw("same");
+    fit1nP2_nocut->Draw("same");
+    fit1nM2_nocut->Draw("same");
+    fit1nP3_nocut->Draw("same");
+    fit1nM3_nocut->Draw("same");
+    fit1nP4_nocut->Draw("same");
+    fit1nM4_nocut->Draw("same");
+
+    leg2_nocut->AddEntry(hZDCP_withTrig[trig.first],"ZDC Plus ","l");
+    leg2_nocut->AddEntry(hZDCM_withTrig[trig.first],"ZDC Minus ","l");
+    leg2_nocut->AddEntry(fit1nM_nocut,Form("ZDC- peak 1n: #mu=%.1f, #sigma=%.1f", muM1, sigM1), "l");
+    leg2_nocut->AddEntry(fit1nP_nocut,Form("ZDC+ peak 1n: #mu=%.1f, #sigma=%.1f", muP1, sigP1), "l");
+    leg2_nocut->AddEntry(fit1nM2_nocut,Form("ZDC- peak 2n: #mu=%.1f, #sigma=%.1f", muM2, sigM2), "l");
+    leg2_nocut->AddEntry(fit1nP2_nocut,Form("ZDC+ peak 2n: #mu=%.1f, #sigma=%.1f", muP2, sigP2), "l");
+    leg2_nocut->AddEntry(fit1nM3_nocut,Form("ZDC- peak 3n: #mu=%.1f, #sigma=%.1f", muM3, sigM3), "l");
+    leg2_nocut->AddEntry(fit1nP3_nocut,Form("ZDC+ peak 3n: #mu=%.1f, #sigma=%.1f", muP3, sigP3), "l");
+    leg2_nocut->AddEntry(fit1nM4_nocut,Form("ZDC- peak 4n: #mu=%.1f, #sigma=%.1f", muM4, sigM4), "l");
+    leg2_nocut->AddEntry(fit1nP4_nocut,Form("ZDC+ peak 4n: #mu=%.1f, #sigma=%.1f", muP4, sigP4), "l");
+
+    leg2_nocut->Draw("same");
+    cms->Draw("same");
+    nEvents->Draw("same");
+    lumi->Draw("same");
+    trigTex->Draw("same");
+    lumisectionTex->Draw("same");
+    for(auto const & extStr : extensions){
+      c_nocut->SaveAs(Form("%s/Online_ZDCNeutronWithTrig_nocut_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
+    }
+
+    // ------------------------------------------
+    /* Online to GeV (nocut P)*/
+    // ------------------------------------------
+    TLegend* leg2_nocut_P = new TLegend(0.5,0.6,0.8,0.85);
+    leg2_nocut_P->SetBorderSize(0);
+    leg2_nocut_P->SetFillStyle(0);
+    leg2_nocut_P->SetTextSize(0.03);
+
+    TCanvas* c_nocut_P = new TCanvas("c_nocut_P","c_nocut_P",800,600);
+    c_nocut_P->cd();
+    c_nocut_P->SetTickx(1);
+    c_nocut_P->SetTicky(1);
+    c_nocut_P->SetLogy();
+    c_nocut_P->SetTopMargin(0.09);
+    c_nocut_P->SetBottomMargin(0.11);
+    c_nocut_P->SetLeftMargin(0.09);
+    c_nocut_P->SetRightMargin(0.05);
+
+    // zdc plus
+    hZDCP_withTrig_nocut[trig.first]->SetLineColor(kRed);
+    hZDCP_withTrig_nocut[trig.first]->SetLineWidth(2);
+    hZDCP_withTrig_nocut[trig.first]->GetXaxis()->SetTitleSize(0.05);
+    hZDCP_withTrig_nocut[trig.first]->SetMarkerStyle(20);
+    hZDCP_withTrig_nocut[trig.first]->GetXaxis()->SetTitle("ZDC Offline Energy Sum (GeV)");
+    hZDCP_withTrig_nocut[trig.first]->GetXaxis()->SetTitleSize(0.05);
+    hZDCP_withTrig_nocut[trig.first]->GetXaxis()->SetRangeUser(0, xmax);
+
+    hZDCP_withTrig_nocut[trig.first]->Draw();
+    ymax = std::max(hZDCM_withTrig_nocut[trig.first]->GetMaximum(), hZDCP_withTrig_nocut[trig.first]->GetMaximum()) * 1.5;
+    hZDCP_withTrig_nocut[trig.first]->GetYaxis()->SetRangeUser(1, ymax);
+
+    muP1 = fit1nP_nocut->GetParameter(1);
+    sigP1 = fit1nP_nocut->GetParameter(2);
+    muP2  = fit1nP2_nocut->GetParameter(1);
+    sigP2 = fit1nP2_nocut->GetParameter(2);
+    muP3  = fit1nP3_nocut->GetParameter(1);
+    sigP3 = fit1nP3_nocut->GetParameter(2);
+    muP4  = fit1nP4_nocut->GetParameter(1);
+    sigP4 = fit1nP4_nocut->GetParameter(2);
+
+    fit1nP_nocut->Draw("same");
+    fit1nP2_nocut->Draw("same");
+    fit1nP3_nocut->Draw("same");
+    fit1nP4_nocut->Draw("same");
+
+    leg2_nocut_P->AddEntry(hZDCP_withTrig[trig.first],"ZDC Plus ","l");
+    leg2_nocut_P->AddEntry(fit1nP_nocut,Form("ZDC+ peak 1n: #mu=%.1f, #sigma=%.1f", muP1, sigP1), "l");
+    leg2_nocut_P->AddEntry(fit1nP2_nocut,Form("ZDC+ peak 2n: #mu=%.1f, #sigma=%.1f", muP2, sigP2), "l");
+    leg2_nocut_P->AddEntry(fit1nP3_nocut,Form("ZDC+ peak 3n: #mu=%.1f, #sigma=%.1f", muP3, sigP3), "l");
+    leg2_nocut_P->AddEntry(fit1nP4_nocut,Form("ZDC+ peak 4n: #mu=%.1f, #sigma=%.1f", muP4, sigP4), "l");
+    leg2_nocut_P->Draw("same");
+    cms->Draw("same");
+    nEvents->Draw("same");
+    lumi->Draw("same");
+    trigTex->Draw("same");
+    lumisectionTex->Draw("same");
+    for(auto const & extStr : extensions){
+      c_nocut_P->SaveAs(Form("%s/Online_ZDCNeutronWithTrig_nocut_PlusOnly_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
+    }
+
+    // ------------------------------------------
+    /* Online to GeV (nocut M)*/
+    // ------------------------------------------
+    TLegend* leg2_nocut_M = new TLegend(0.5,0.6,0.8,0.85);
+    leg2_nocut_M->SetBorderSize(0);
+    leg2_nocut_M->SetFillStyle(0);
+    leg2_nocut_M->SetTextSize(0.03);
+
+    TCanvas* c_nocut_M = new TCanvas("c_nocut_M","c_nocut_M",800,600);
+    c_nocut_M->cd();
+    c_nocut_M->SetTickx(1);
+    c_nocut_M->SetTicky(1);
+    c_nocut_M->SetLogy();
+    c_nocut_M->SetTopMargin(0.09);
+    c_nocut_M->SetBottomMargin(0.11);
+    c_nocut_M->SetLeftMargin(0.09);
+    c_nocut_M->SetRightMargin(0.05);
+
+    // zdc minus
+    hZDCM_withTrig_nocut[trig.first]->SetLineColor(kBlue);
+    hZDCM_withTrig_nocut[trig.first]->SetLineWidth(2);
+    hZDCM_withTrig_nocut[trig.first]->SetMarkerStyle(20);
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetTitle("ZDC Offline Energy Sum (GeV)");
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetTitleSize(0.05);
+    hZDCM_withTrig_nocut[trig.first]->GetXaxis()->SetRangeUser(0, xmax);
+
+    hZDCM_withTrig_nocut[trig.first]->Draw();
+
+    ymax = std::max(hZDCM_withTrig_nocut[trig.first]->GetMaximum(), hZDCP_withTrig_nocut[trig.first]->GetMaximum()) * 1.5;
+    hZDCM_withTrig_nocut[trig.first]->GetYaxis()->SetRangeUser(1, ymax);
+    // cout << "Integral Plus: " << hZDCP_withTrig->Integral() << endl;
+    // cout << "Integral Minus: " << hZDCM_withTrig->Integral() << endl;
+
+    fit1nM_nocut->Draw("same");
+    fit1nM2_nocut->Draw("same");
+    fit1nM3_nocut->Draw("same");
+    fit1nM4_nocut->Draw("same");
+
+    leg2_nocut_M->AddEntry(hZDCM_withTrig[trig.first],"ZDC Minus ","l");
+    leg2_nocut_M->AddEntry(fit1nM_nocut,Form("ZDC- peak 1n: #mu=%.1f, #sigma=%.1f", muM1, sigM1), "l");
+    leg2_nocut_M->AddEntry(fit1nM2_nocut,Form("ZDC- peak 2n: #mu=%.1f, #sigma=%.1f", muM2, sigM2), "l");
+    leg2_nocut_M->AddEntry(fit1nM3_nocut,Form("ZDC- peak 3n: #mu=%.1f, #sigma=%.1f", muM3, sigM3), "l");
+    leg2_nocut_M->AddEntry(fit1nM4_nocut,Form("ZDC- peak 4n: #mu=%.1f, #sigma=%.1f", muM4, sigM4), "l");
+
+    leg2_nocut->Draw("same");
+    cms->Draw("same");
+    nEvents->Draw("same");
+    lumi->Draw("same");
+    trigTex->Draw("same");
+    lumisectionTex->Draw("same");
+    for(auto const & extStr : extensions){
+      c_nocut_M->SaveAs(Form("%s/Online_ZDCNeutronWithTrig_nocut_MinusOnly_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
+    }
+
+    // ------------------------------------------
+    /* Online to GeV (norm) */
+    // ------------------------------------------
+    TCanvas* c2_norm = new TCanvas("c2_norm","c2_norm",800,600);
+    c2_norm->cd();
+    c2_norm->SetTickx(1);
+    c2_norm->SetTicky(1);
+    c2_norm->SetLogy();
+    c2_norm->SetTopMargin(0.09);
+    c2_norm->SetBottomMargin(0.11);
+    c2_norm->SetLeftMargin(0.09);
+    c2_norm->SetRightMargin(0.05);
+
+    // zdc plus
+    TH1 *hZDCP_norm = (TH1*)hZDCP_withTrig[trig.first]->Clone();
+    hZDCP_norm->Scale(1.0 / totalEvents);
+
+    // zdc minus
+    TH1 *hZDCM_norm = (TH1*)hZDCM_withTrig[trig.first]->Clone();
+    hZDCM_norm->Scale(1.0 / totalEvents);
+  
+    hZDCP_norm->SetLineColor(kRed);
+    hZDCP_norm->SetLineWidth(2);
+    hZDCP_norm->GetXaxis()->SetTitleSize(0.05);
+    hZDCP_norm->SetMarkerStyle(20);
+
+    // zdc minus
+    hZDCM_norm->SetLineColor(kBlue);
+    hZDCM_norm->SetLineWidth(2);
+    hZDCM_norm->SetMarkerStyle(20);
+
+    TF1* fit1n_norm = new TF1("fit1n_norm", "gaus", 1000, 3000);
+    fit1n_norm->SetLineColor(kBlack);
+    fit1n_norm->SetLineWidth(2);
+    fit1n_norm->SetLineStyle(2);
+    fit1n_norm->SetRange(0.,6000);
+    hZDCP_norm->Fit(fit1n_norm, "0", "", 1000, 3000);
+
+    TF1* fit1nM_norm = new TF1("fit1nM_norm", "gaus",  1000, 3000);
+    fit1nM_norm->SetLineColor(kBlue+2);
+    fit1nM_norm->SetLineWidth(2);
+    fit1nM_norm->SetLineStyle(2);
+    fit1nM_norm->SetRange(0.,6000);
+    hZDCM_norm->Fit(fit1nM_norm, "0", "", 1000, 3000);
+
+    hZDCP_norm->Draw("HIST");
+    hZDCM_norm->Draw("HIST same");
+
+    leg2->Draw("same");
+    cms->Draw("same");
+    nEvents->Draw("same");
+    lumi->Draw("same");
+    trigTex->Draw("same");
+    fit1n_norm->Draw("same");
+    fit1nM_norm->Draw("same");
+    c2_norm->Draw("same");
+    for(auto const & extStr : extensions){
+      c2_norm->SaveAs(Form("%s/Online_ZDCNeutronWithTrigNormalized_%s_%s.%s",outDirPlot.c_str(),trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
 
     // ------------------------------------------
@@ -1491,13 +2045,15 @@ int plotZDCEmuLoop() {
 
     cloneMinus.SetLineStyle(1);
     clonePlus.GetYaxis()->SetRangeUser(0, 1.1);
-    clonePlus.GetXaxis()->SetRangeUser(0, 10000);
+    clonePlus.GetXaxis()->SetRangeUser(0, xmax);
     clonePlus.Draw("");
     cloneMinus.Draw("lp same");
     cms->Draw("same");
+    nEvents->Draw("same");
     lumi->Draw("same");
     trigTex->Draw("same");
     leg4->Draw("same");
+    lumisectionTex->Draw("same");
     for(auto const & extStr : extensions){
       c4->SaveAs(Form("%s/TurnOn_%s_%s.%s",outDirPlot.c_str(), trig.first.c_str(), tag.c_str(), extStr.c_str()));
     }
@@ -1508,7 +2064,7 @@ int plotZDCEmuLoop() {
     delete c4;
     delete leg4;
     delete fit1nM;
-    delete fit1n;
+    delete fit1nP;
     delete c2;
     delete leg2;
     delete cANVB;
