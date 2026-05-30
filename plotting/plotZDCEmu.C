@@ -111,7 +111,7 @@ map<int, bxSchemeBits> getBxScheme(string schemeCSV)
 // input: folder of l1ntuples to read from - must contain the branches specified above
 // verbose: whether or not to print out the full output (error messgaes will always be printed)
 int plotZDCEmu(
-	       char const *input = "/eos/cms/store/group/phys_heavyions/cmcginn/Run2026/HIPhysicsRawPrime10/404/197/") {
+	       char const *input = "/eos/cms/store/group/phys_heavyions/cmcginn/Run2026/PhysicsHIPhysicsRawPrime10/404/195/") {
 
   cout << "Running over " << input << endl;
 
@@ -123,7 +123,7 @@ int plotZDCEmu(
   string runNum = inputStr;
 
   string runYear = "2026";
-  string pdName = "HIPhysicsRawPrime10";//Have to replace this for alt pds
+  string pdName = "PhysicsHIPhysicsRawPrime10";//Have to replace this for alt pds
   //Consider: ExpressCosmics, HIExpress, HIForwardX
   string formatInput = "/eos/cms/store/group/phys_heavyions/cmcginn/Run" + runYear + "/" + pdName + "/";
   if(runNum.find(formatInput) != string::npos){
@@ -291,6 +291,7 @@ int plotZDCEmu(
   bool isCosmics = inputStr.find("ExpressCosmics") != string::npos;
   map<string, int> l1Cosmics;
   l1Cosmics["L1_AlwaysTrue"] = 0; //same order as above in OMS
+
 
   //Test nHist
   if(l1MB.size() > nHist && isMB){
@@ -1196,7 +1197,7 @@ int plotZDCEmu(
       cms->Draw("same");
       cutAsymmNorm->Draw("same");
       for(auto const & extStr : extensions){
-	cANVRB->SaveAs(Form("pdfDir/Online_AsymmNormVRelBxPlusZoom_%s_%s.%s", trig.first.c_str(), tag.c_str(), extStr.c_str()));
+	    cANVRB->SaveAs(Form("pdfDir/Online_AsymmNormVRelBxPlusZoom_%s_%s.%s", trig.first.c_str(), tag.c_str(), extStr.c_str()));
       }
       delete cANVRB;
     }
