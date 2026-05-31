@@ -569,8 +569,8 @@ int plotZDCEmuLoop(
       //Define a reasonable coarseness to your binning
       nBinsRel = TMath::Abs(maxDeltaBxMinus);
       while(nBinsRel > 100){
-	if(nBinsRel%2 != 0) ++nBinsRel;
-	nBinsRel /= 2;
+        if(nBinsRel%2 != 0) ++nBinsRel;
+        nBinsRel /= 2;
       }
 
       hZDC_AsymmVRelBxMinus[trig.first] = new TH2D(("AsymmVRelBxMinus_" + trig.first).c_str(), "", 50, -300, 300, nBinsRel, maxDeltaBxMinus, 0);
@@ -592,7 +592,7 @@ int plotZDCEmuLoop(
 
     //Counter to not spam i/o w/ json skipping messages
     map<int, int> runJSONMessage;
-
+    TH1I *hNevents = new TH1I("nEvents", "nEvents", 1, 0, 1);
     uint minBx = 100000;
     uint maxBx = 0;
 
@@ -610,7 +610,6 @@ int plotZDCEmuLoop(
     string tag = "Run" + runNum + "ls" + lsNumStr;
     string lumiStr = "Run: " + runNum + ", Fill: " + fill + ", nBunches: " + nBunch;
     string cmsLabel = "#bf{CMS}#it{Work-in-Progress} " + runYear + " PbPb (5.36 TeV) " + globalLabel;
-
     
     cout << __LINE__ << endl;
     //  if(isZeroBias) cmsLabel = cmsLabelfitxmin4n + " ZeroBias";
@@ -664,7 +663,6 @@ int plotZDCEmuLoop(
     if(applyJSON){
       if(!dcs.isGood(*runNumber,*lumiSection)) continue;
     }
-
 
     //cout << *nSums << endl;
     int unpackerSumPlus = -1;
@@ -740,13 +738,11 @@ int plotZDCEmuLoop(
 
 	  if(relBxPlus == 0){
 	    cout << "File, run, lumi, evt: " << hiEventChain.GetFile()->GetName() << ", " << *runNumber << ", " << *lumiSection << ", " << *eventNumber << endl;
-
 	    cout << " Relbxplus 0, absbx: " << bxCorr << endl;
 	  }
 
 	  if(relBxMinus == 0){
 	    cout << "File, run, lumi, evt: " << hiEventChain.GetFile()->GetName() << ", " << *runNumber << ", " << *lumiSection << ", " << *eventNumber << endl;
-
 	    cout << " Relbxminus 0, absbx: " << bxCorr << endl;
 	  }
 
@@ -808,6 +804,10 @@ int plotZDCEmuLoop(
     hZDCM_Emu[trig.first]->Write("", TObject::kOverwrite);
     hZDCP_withTrig[trig.first]->Write("", TObject::kOverwrite);
     hZDCM_withTrig[trig.first]->Write("", TObject::kOverwrite);
+
+    hZDCP_withTrig_nocut[trig.first]->Write("", TObject::kOverwrite);
+    hZDCM_withTrig_nocut[trig.first]->Write("", TObject::kOverwrite);
+
     hZDCP[trig.first]->Write("", TObject::kOverwrite);
     hZDCM[trig.first]->Write("", TObject::kOverwrite);
     hZDCP_EmuScaled[trig.first]->Write("", TObject::kOverwrite);
@@ -898,10 +898,12 @@ int plotZDCEmuLoop(
       delete hZDC_AsymmVRelBxAbsZoom[trig.first];
       delete hZDC_AsymmNormVRelBxAbsZoom[trig.first];
     }
+    hNevents->SetBinContent(1,l1MapCounter[trig.first]);
     delete hZDCAsymCorr[trig.first];
     delete hZDCAsymCorrJet[trig.first];
   }
 
+  hNevents->Write();
 
   std::cout << "L" << __LINE__ << std::endl;
 
@@ -953,5 +955,5 @@ int main(int argc, char *argv[]){
                         "0080","0081","0082","0083","0084","0085","0086","0087","0088","0089","0090",
                         "0091","0092","0093","0094","0095","0096","0097","0098","0099","0100","0101",
                         "0102","0103","0104","0105","0106","0107","0108","0109","0110","0111","0112"};*/
-    plotZDCEmuLoop(lsNumSetVector,argv[2],argv[3]);
+    plotZDCEmuLoop(lsNumSetVector,argv[2],argv[3],argv[4]);
 }
