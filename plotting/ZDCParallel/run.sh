@@ -15,7 +15,7 @@ LUMI_GROUPS=(
     "0105,0106,0107,0108"
     "0109,0110,0111,0112"
 )
-TXT=${2:-"/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/inputFolders/Forward_394.txt"}
+TXT=${2:-"Example.txt"}
 KEY=${3:-"PhysicsHIForward"}
 OUTPUTFOLDER=${4:-"/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/output_debug/"}
 
