@@ -32,11 +32,11 @@
 #include <ctime>
 #include "TSystem.h"
 
-void plottingMacro69(){
+void plottingMacro100(){
 
-    string inputfile = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/output/output_HIForward_Run404394_69to112_Updated/plotZDCEmuHists_PhysicsHIForward_Run404394.root";
-    string outDirPlot = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/PlotNew/PlotsLumiLevelNew/";
-    vector<string> extensions = {"png","C","pdf"}; //add the .C output if you want to do rapid edits after the fact
+    string inputfile = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/output_HIPhysicsRawPrime_Run404359_100to110/merged/plotZDCEmuHists_PhysicsHIPhysicsRawPrime.root";
+    string outDirPlot = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/PlotNew/PlotsRawPrime_404359/";
+    vector<string> extensions = {"png"};//,"C","pdf"}; //add the .C output if you want to do rapid edits after the fact
 
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(0);
@@ -63,24 +63,25 @@ void plottingMacro69(){
     int histPos = 0;
     double maxJetEt = -1.0;
 
-    int fitxmin1n = 2000;
-    int fitymin1n = 4000;
-    int fitxmin2n = 5000;
-    int fitymin2n = 6500;       
-    int fitxmin3n = 8000;
+    int fitxmin1n = 1000;
+    int fitymin1n = 3500;
+    int fitxmin2n = 4500;
+    int fitymin2n = 6000;       
+    int fitxmin3n = 7500;
     int fitymin3n = 9000;
-    int fitxmin4n = 11000;
-    int fitymin4n = 12000;
-    int fitxmin4nP = 11000;
-    int fitymin4nP = 12000;
+    int fitxmin4n = 10000;
+    int fitymin4n = 11000;
+    int fitxmin4nP = 9500;
+    int fitymin4nP = 11500;
 
 
     int xmax = 20000;
-    int ymin = 5000;
-    int xminzoom = 1000;
-    int xmaxzoom = 20000;
-    int yminzoom = 1000;
-    int ymaxzoom = 20000;
+    int ymin = 2000;
+    int ymax = 50000000;
+    int xminzoom = 6500;
+    int xmaxzoom = 15000;
+    int yminzoom = 3000;
+    int ymaxzoom = 8000;
 
     const double topY = 0.86;
     const double bottomY = 0.36;
@@ -127,7 +128,7 @@ void plottingMacro69(){
       trigTex->SetTextSize(0.035);
       trigTex->SetTextFont(42);
 
-      TLatex* lumisectionTex = new TLatex(xLatex,topY-0.12,"lumisection 450-475");
+      TLatex* lumisectionTex = new TLatex(xLatex,topY-0.12,"lumisection 100-110");
       lumisectionTex->SetNDC();
       lumisectionTex->SetTextSize(0.035);
       lumisectionTex->SetTextFont(42);
@@ -147,7 +148,7 @@ void plottingMacro69(){
       leg2->SetFillStyle(0);
       leg2->SetTextSize(0.03);
 
-      TCanvas* c2 = new TCanvas("c2","c2",800,800);
+      TCanvas* c2 = new TCanvas("c2","c2",800,600);
       c2->cd();
       c2->SetTickx(1);
       c2->SetTicky(1);
@@ -252,7 +253,7 @@ void plottingMacro69(){
       hZDCM_L1_ZeroBias->GetXaxis()->SetTitleSize(0.05);
       hZDCM_L1_ZeroBias->GetXaxis()->SetRangeUser(0, xmax);
 
-      double ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
+    //  ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
       hZDCM_L1_ZeroBias->GetYaxis()->SetRangeUser(ymin, ymax);
       hZDCM_L1_ZeroBias->Draw();
       hZDCP_L1_ZeroBias->Draw("same");
@@ -325,7 +326,7 @@ void plottingMacro69(){
       hZDCP_L1_ZeroBias->GetXaxis()->SetTitleSize(0.05);
       hZDCP_L1_ZeroBias->GetXaxis()->SetRangeUser(0, xmax);
 
-      ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
+    //  ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
       hZDCP_L1_ZeroBias->GetYaxis()->SetRangeUser(ymin, ymax);
       hZDCP_L1_ZeroBias->Draw();
 
@@ -376,7 +377,7 @@ void plottingMacro69(){
       hZDCM_L1_ZeroBias->GetXaxis()->SetTitleSize(0.05);
       hZDCM_L1_ZeroBias->GetXaxis()->SetRangeUser(0, xmax);
 
-      ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
+  //    ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
       hZDCM_L1_ZeroBias->GetYaxis()->SetRangeUser(ymin, ymax);
       hZDCM_L1_ZeroBias->Draw();
 
@@ -427,7 +428,7 @@ void plottingMacro69(){
       hZDCM_L1_ZeroBias->GetXaxis()->SetTitleSize(0.05);
       hZDCM_L1_ZeroBias->GetXaxis()->SetRangeUser(0, xmax);
 
-      ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
+    //  ymax = std::max(hZDCM_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
       hZDCM_L1_ZeroBias->GetYaxis()->SetRangeUser(ymin, ymax);
       hZDCM_L1_ZeroBias->Draw();
 
@@ -469,7 +470,7 @@ void plottingMacro69(){
       hZDCP_L1_ZeroBias->GetXaxis()->SetTitleSize(0.05);
       hZDCP_L1_ZeroBias->GetXaxis()->SetRangeUser(0, xmax);
 
-      ymax = std::max(hZDCP_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
+   //   ymax = std::max(hZDCP_L1_ZeroBias->GetMaximum(), hZDCP_L1_ZeroBias->GetMaximum()) * 1.5;
       hZDCP_L1_ZeroBias->GetYaxis()->SetRangeUser(ymin, ymax);
       hZDCP_L1_ZeroBias->Draw();
 
@@ -554,12 +555,6 @@ void plottingMacro69(){
         // ------------------------------------------
       /* Online to GeV for LHCC*/
       // ------------------------------------------
-      xmax = 15000;
-      ymin = 5000;
-      xminzoom = 7000;
-      xmaxzoom = 15000;
-      yminzoom = 15000;
-      ymaxzoom = 44000;
 
       TLegend* leg2_LHCC = new TLegend(0.13,0.5,0.30,0.88);
       leg2_LHCC->SetBorderSize(0);
