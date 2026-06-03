@@ -12,7 +12,6 @@
 #include "TChain.h"
 #include "TStyle.h"
 
-
 #include "TMath.h"
 #include "TH1F.h"
 #include "TH2F.h"
@@ -32,10 +31,10 @@
 #include <ctime>
 #include "TSystem.h"
 
-void plottingMacro69(){
+void plottingMacro(){
 
-    string inputfile = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/output/output_HIForward_Run404394_69to112_Updated/plotZDCEmuHists_PhysicsHIForward_Run404394.root";
-    string outDirPlot = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/plotting/PlotNew/PlotsLumiLevelNew/";
+    string inputfile = "plotZDCEmuHists_PhysicsHIForward_Run404394.root";
+    string outDirPlot = "../pdfDir/";
     vector<string> extensions = {"png","C","pdf"}; //add the .C output if you want to do rapid edits after the fact
 
     gStyle->SetOptStat(0);
