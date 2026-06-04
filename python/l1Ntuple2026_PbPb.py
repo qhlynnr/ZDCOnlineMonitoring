@@ -25,7 +25,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '161X_dataRun3_Prompt_v1', '')
 
 # To change the number of events, change this part
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(5000),
+    input = cms.untracked.int32(-1),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
@@ -33,40 +33,47 @@ process.maxEvents = cms.untracked.PSet(
 # in case of dat files - read it like this
 
 # functions for getting lumisections from filename
-'''
+
 import re as RegEx
 def get_lumisection(fileName):
     match = RegEx.match(r"run(\d+)_ls(\d+)_stream([A-Za-z0-9]+)_StorageManager.dat",fileName)
-    print("Run Number ", match.group(1),  "LS ", match.group(2), "DataSet ", match.group(3),)
+    #print("Run Number ", match.group(1),  "LS ", match.group(2), "DataSet ", match.group(3),)
     return(int(match.group(2)))
 
+runNum = 404549
+lumiNum = 101
+pdNum = 0
+key = "PhysicsHIPhysicsRawPrime"
+runNumNew = f"{str(runNum)[:3]}/{str(runNum)[3:]}"
 validLumiNums = {
-    "399499" : [[100,150],]
+    str(runNum) : [[lumiNum,lumiNum],]
 }
 
-filedir = '/eos/cms/store/t0streamer/Data/PhysicsHIForward0/000/399/499'
+filedir = f'/eos/cms/store/t0streamer/Data/{key}{pdNum}/000/{runNumNew}'
 infile    = cms.untracked.vstring()
 for f in reversed(os.listdir(filedir)):
    validLumi = False
    LumiSection = get_lumisection(f)
-   for lumiNum in validLumiNums["399499"]:
+   for lumiNum in validLumiNums[str(runNum)]:
       if (LumiSection >= lumiNum[0] and LumiSection <= lumiNum[1]) : validLumi = True
    if validLumi == False: continue
    if f[-4:] == '.dat' :
        infile.append('file:'+filedir+'/'+f)
-print(infile)
+#print("InFile: ")
+#print(infile)
 
 
 process.source = cms.Source("NewEventStreamFileReader",
-                            fileNames = infile,
+                            fileNames = infile
 )
-'''
 
-process.source = cms.Source("PoolSource",
-     fileNames = cms.untracked.vstring(
-         '/store/hidata/HIRun2025A/HIEphemeralZeroBias0/RAW/v1/000/399/925/00000/f44192ce-9c5b-445d-aaf3-f844dc5c6294.root'
-     )
-)
+#"/eos/cms/store/group/phys_heavyions/xirong/l1ntuple/L1Ntuple_404549.root"
+
+#process.source = cms.Source("PoolSource",
+ #    fileNames = cms.untracked.vstring(
+  #       '/store/hidata/HIRun2025A/HIEphemeralZeroBias0/RAW/v1/000/399/925/00000/f44192ce-9c5b-445d-aaf3-f844dc5c6294.root'
+   #  )
+#)
 
 #process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange('399499:100-399499:150')
 
@@ -197,6 +204,7 @@ process.etSumZdc = cms.Path(process.etSumZdcProducer)
 process.schedule.append(process.etSumZdc)
 #======================================================================
 
+MassReplaceInputTag(process, new="rawDataMapperByLabel", old="rawDataCollector")
 
 #UNCOMMENT HERE TO WORK WITH THE LATEST GREATEST
 #MassReplaceInputTag(process, new="rawDataRepacker", old="rawDataCollector")
