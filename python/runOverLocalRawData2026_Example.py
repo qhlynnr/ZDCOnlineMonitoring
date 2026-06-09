@@ -4,6 +4,9 @@ import FWCore.ParameterSet.Config as cms
 import os
 import sys
 
+run_number = "404744"
+input_file = "file:/eos/cms/store/group/dpg_hcal/comm_hcal/ZDC/USC/run{0}/USC_{0}.root".format(run_number)
+output_file = "/afs/cern.ch/user/x/xirong/ZDCOnlineMonitoring/ZDCLocalPedestalOutputs/ZDCAnalyzer_USC_{0}.root".format(run_number)
 
 process = cms.Process('LocalZDC')
 
@@ -34,11 +37,8 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source (for now first local run of 2025)
 process.source = cms.Source("HcalTBSource",
-    fileNames = cms.untracked.vstring(
-        'file:/eos/cms/store/group/dpg_hcal/comm_hcal/ZDC/USC/run404027/USC_404027.root'
-    ),
+    fileNames = cms.untracked.vstring(input_file),
     firstLuminosityBlockForEachRun = cms.untracked.VLuminosityBlockID(*[])
-
 )
 
 
@@ -96,7 +96,7 @@ process = customiseEarlyDelete(process)
 
 # root output
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("ZDCAnalyzer_USC_404027.root"))
+    fileName = cms.string(output_file))
 
 # =====================================================================
 # add in the zdc analyzer - this writes the digi information to a tree
